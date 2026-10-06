@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Interactive dashboards — the financing spine of options</title>
+<title>Paths and the Square Root of Time</title>
 <style>
 
 :root{
@@ -113,25 +113,88 @@ h2.rv{border-top:3px solid var(--crimson)}
 @media(max-width:620px){.grid2{grid-template-columns:1fr}h1{font-size:31px}h2{font-size:22px}.part h2.pt{font-size:24px}body{font-size:16.5px}.wrap{padding:0 18px 90px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-body { background:var(--paper); }
-.wrap { max-width:720px; padding:0 22px 60px; }
-.ix-head { border-bottom:3px solid var(--ink); padding:56px 0 22px; margin-bottom:12px; }
-.ix-head .kicker { font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px;
-  letter-spacing:.09em; color:var(--crimson); font-weight:600; margin:0 0 12px; text-transform:uppercase; }
-.ix-head h1 { font-size:32px; margin:0 0 12px; letter-spacing:-.02em; }
-.ix-head p { color:var(--slate); font-size:17px; margin:0; }
-.ix-item { display:block; border-bottom:1px solid var(--rule); padding:22px 0; text-decoration:none; color:inherit; }
-.ix-item:hover h2 { color:var(--crimson); }
-.ix-item .sec { font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:11.5px;
-  letter-spacing:.07em; color:var(--muted); text-transform:uppercase; margin:0 0 5px; }
-.ix-item h2 { font-size:20px; margin:0 0 7px; border:none; padding:0; letter-spacing:-.01em; }
-.ix-item p { margin:0; color:var(--slate); font-size:15.5px; line-height:1.55; }
-</style></head><body><div class="wrap">
-<div class="ix-head">
-<p class="kicker">Derivatives foundations</p>
-<h1>Interactive dashboards</h1>
-<p>Models from <i>The financing spine of options</i>. Each runs entirely in the
-page — move the sliders and watch the band move.</p>
+/* standalone-embed overrides */
+body { background:#fff; font-size:16px; }
+.wrap { max-width:820px; padding:0 18px 22px; }
+.embed-head { border-bottom:2px solid var(--ink); padding:18px 0 12px; margin-bottom:4px; }
+.embed-head .kicker { font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:11.5px;
+  letter-spacing:.09em; color:var(--crimson); font-weight:600; margin:0 0 6px; text-transform:uppercase; }
+.embed-head h1 { font-size:21px; margin:0; letter-spacing:-.012em; }
+.w { margin:18px 0 0; }
+.embed-foot { font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:11.5px;
+  color:var(--muted); margin:18px 0 0; padding-top:10px; border-top:1px solid var(--rule); }
+@media(max-width:620px) { .grid2 { grid-template-columns:1fr; } }
+</style></head>
+<body><div class="wrap">
+<div class="embed-head"><p class="kicker">Black-Scholes — the random walk</p><h1>Paths and the square root of time</h1></div>
+<div class="w">
+<div class="w-head">Paths and the square root of time</div>
+<div class="w-body">
+<div class="grid2">
+<div><div class="ctrl"><label>Volatility <span class="m">&sigma;</span><span class="v" id="v-pa-v">25%</span></label><input type="range" id="pa-v" min="5" max="70" step="1" value="25"></div></div>
+<div><div class="ctrl"><label>Drift <span class="m">&mu;</span><span class="v" id="v-pa-d">8%</span></label><input type="range" id="pa-d" min="-20" max="30" step="1" value="8"></div></div>
 </div>
-<a class="ix-item" href="cash-and-carry-band.html"><p class="sec">Section 3 — the forward is a band</p><h2>Cash and Carry Band</h2><p>Set the funding spread and borrow fee to zero and the band collapses to the classroom forward. Widen them and watch how far the market forward must move before either trade pays. On a hard-to-borrow name, push the fee to 10% and see which side of the band disappears.</p></a><a class="ix-item" href="payoff-builder.html"><p class="sec">Section 6 — calls, puts, one identity</p><h2>Synthetic Forward Builder</h2><p>Turn the legs on and off. With both on, the sum is a single straight line crossing zero at K with no kink anywhere — a forward. These are payoffs at expiry, not profits: premiums paid or received are not shown.</p></a><a class="ix-item" href="conversion-reversal-band.html"><p class="sec">Section 8 — the loan inside the options</p><h2>Conversion and Reversal Band</h2><p>Push the call price up and watch the implied rate climb through your borrowing rate: the conversion appears. Push the put up and the reversal appears — unless you raise the borrow fee first, because only the reversal shorts the share. Switch on “I can lend the shares” and raise the fee: the conversion bound drops too.</p></a><a class="ix-item" href="paths-root-time.html"><p class="sec">Black-Scholes — the random walk</p><h2>Paths and the Square Root of Time</h2><p>The shaded band is one standard deviation either side of the median: a square-root curve, not a wedge. Raise volatility and the mean and median separate while the drift stays the same.</p></a><a class="ix-item" href="terminal-distribution.html"><p class="sec">Black-Scholes — N(d₂), N(d₁) and delta</p><h2>The Terminal Distribution</h2><p>Set the strike equal to the forward: N(d₂) settles below 50% while delta stays above it. Raise volatility and the median, forward and delta-neutral strike spread apart while the forward stays pinned.</p></a><a class="ix-item" href="strike-moneyness-delta.html"><p class="sec">Black-Scholes — moneyness</p><h2>Strike, Moneyness, Delta</h2><p>Each vertical line is one strike, read as price, moneyness and call delta. Evenly spaced strikes are not evenly spaced in moneyness, and neither is evenly spaced in delta.</p></a>
-</div></body></html>
+<svg id="pa-svg" viewBox="0 0 680 300" role="img" aria-label="Simulated share price paths inside a square root of time envelope, with the mean and median paths marked"></svg>
+<div class="chips" style="margin-top:14px;margin-bottom:0"><button class="chip" onclick="paDraw()">New paths</button></div>
+<p class="cap">Twelve simulated paths over three years. The shaded band is one standard deviation either side of the median, and it is a <span class="m">&radic;t</span> curve, not a wedge: it opens fast early and then flattens. The solid line is the mean and the dashed line is the median. Push volatility up and watch them separate while the drift is unchanged; the rest of this section explains why.</p>
+</div>
+</div>
+
+</div>
+<script>
+
+function t(id){var e=document.getElementById(id);e.classList.toggle('open');
+  var b=e.previousElementSibling;b.textContent=e.classList.contains('open')?'Hide answer':'Show answer';}
+function N(x){var a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  var s=x<0?-1:1;x=Math.abs(x)/Math.SQRT2;var tt=1/(1+p*x);
+  var y=1-(((((a5*tt+a4)*tt+a3)*tt+a2)*tt+a1)*tt)*Math.exp(-x*x);return 0.5*(1+s*y);}
+function bs(S,K,r,q,v,T){ // European call and put with continuous yield q
+  if(T<=0){return {c:Math.max(S-K,0),p:Math.max(K-S,0)};}
+  var sd=v*Math.sqrt(T), d1=(Math.log(S/K)+(r-q+v*v/2)*T)/sd, d2=d1-sd;
+  var c=S*Math.exp(-q*T)*N(d1)-K*Math.exp(-r*T)*N(d2);
+  var p=K*Math.exp(-r*T)*N(-d2)-S*Math.exp(-q*T)*N(-d1);
+  return {c:c,p:p};}
+function f(x,n){return x.toFixed(n===undefined?2:n);}
+function sg(x,n){return (x>=0?'+':'\u2212')+f(Math.abs(x),n);}
+var C={ink:'#1c2530',slate:'#3d4d5c',muted:'#70808f',crim:'#9b2335',crimS:'#c4415a',rule:'#d5dbe0',panel:'#f1f4f6',pos:'#1f6b45'};
+function el(tag,at){var e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(var k in at)e.setAttribute(k,at[k]);return e;}
+function txt(x,y,s,at){var e=el('text',at||{});e.setAttribute('x',x);e.setAttribute('y',y);
+  e.setAttribute('font-family',"'Helvetica Neue',Helvetica,Arial,sans-serif");
+  if(!e.getAttribute('font-size'))e.setAttribute('font-size','12');
+  if(!e.getAttribute('fill'))e.setAttribute('fill',C.slate);e.textContent=s;return e;}
+function g(id){return document.getElementById(id);}
+function bind(ids,fn){ids.forEach(function(i){g(i).addEventListener('input',fn);});fn();}
+
+/* ================= PATHS AND THE SQUARE ROOT OF TIME ================= */
+function gauss(){var u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function paDraw(){
+  var vol=+g('pa-v').value/100, mu=+g('pa-d').value/100;
+  g('v-pa-v').textContent=f(vol*100,0)+'%'; g('v-pa-d').textContent=f(mu*100,0)+'%';
+  var s=g('pa-svg');s.innerHTML='';
+  var L=58,R=650,TP=18,BT=258,TT=3,n=180,dt=TT/n,vlo=20,vhi=320;
+  function X(i){return L+i/n*(R-L);}
+  function Y(v){return BT-(Math.max(vlo,Math.min(vhi,v))-vlo)/(vhi-vlo)*(BT-TP);}
+  for(var gl=50;gl<=300;gl+=50){
+    s.appendChild(el('line',{x1:L,y1:Y(gl),x2:R,y2:Y(gl),stroke:C.rule,'stroke-width':1}));
+    s.appendChild(txt(L-8,Y(gl)+4,gl,{'font-size':'11',fill:C.muted,'text-anchor':'end'}));}
+  for(var yy=0;yy<=3;yy++){s.appendChild(txt(X(yy/TT*n),BT+18,yy+'y',{'font-size':'11',fill:C.muted,'text-anchor':'middle'}));}
+  var up=[],dn=[];
+  for(var i=0;i<=n;i++){var tt=i*dt,med=100*Math.exp((mu-vol*vol/2)*tt),sd=vol*Math.sqrt(tt);
+    up.push(X(i)+' '+Y(med*Math.exp(sd)));dn.push(X(i)+' '+Y(med*Math.exp(-sd)));}
+  s.appendChild(el('path',{d:'M'+up.join('L')+'L'+dn.reverse().join('L')+'Z',fill:C.crimS,opacity:0.12,stroke:'none'}));
+  for(var k=0;k<12;k++){var S=100,d='M'+X(0)+' '+Y(100);
+    for(var j=1;j<=n;j++){S*=Math.exp((mu-vol*vol/2)*dt+vol*Math.sqrt(dt)*gauss());d+='L'+X(j)+' '+Y(S);}
+    s.appendChild(el('path',{d:d,fill:'none',stroke:C.slate,'stroke-width':0.9,opacity:0.5}));}
+  var dm='',dmean='';
+  for(var i3=0;i3<=n;i3++){var t3=i3*dt;
+    dm+=(i3?'L':'M')+X(i3)+' '+Y(100*Math.exp((mu-vol*vol/2)*t3));
+    dmean+=(i3?'L':'M')+X(i3)+' '+Y(100*Math.exp(mu*t3));}
+  s.appendChild(el('path',{d:dm,fill:'none',stroke:C.crim,'stroke-width':2,'stroke-dasharray':'6 4'}));
+  s.appendChild(el('path',{d:dmean,fill:'none',stroke:C.crim,'stroke-width':2}));
+  s.appendChild(txt(R,TP+10,'solid line: mean \u00b7 dashed line: median \u00b7 band: one standard deviation',{'font-size':'11.5',fill:C.crim,'text-anchor':'end'}));
+}
+bind(['pa-v','pa-d'],paDraw);
+
+
+</script></body></html>

@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strike, Moneyness, Delta</title>
+<style>
+
+:root{
+  --ink:#1c2530;--slate:#3d4d5c;--muted:#70808f;
+  --crimson:#9b2335;--crimson-soft:#c4415a;
+  --paper:#fbfaf8;--panel:#f1f4f6;--panel-warm:#f7f3ef;
+  --rule:#d5dbe0;--rule-strong:#aab5bf;
+  --pos:#1f6b45;--neg:#9b2335;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.68}
+.wrap{max-width:760px;margin:0 auto;padding:0 26px 120px}
+h1,h2,h3,h4,.sans{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}
+.masthead{border-bottom:3px solid var(--ink);padding:64px 0 26px;margin-bottom:44px}
+.masthead .kicker{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;letter-spacing:.09em;color:var(--crimson);font-weight:600;margin:0 0 14px}
+h1{font-size:40px;line-height:1.14;font-weight:700;letter-spacing:-.021em;margin:0 0 16px}
+.standfirst{font-size:19px;color:var(--slate);margin:0;line-height:1.6}
+.part{margin:80px 0 0;padding:14px 0 0;border-top:3px solid var(--ink)}
+.part .pk{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;letter-spacing:.09em;color:var(--crimson);font-weight:600;margin:0 0 6px}
+.part h2.pt{border:none;margin:0;padding:0;font-size:29px}
+.part p.pl{color:var(--slate);font-size:16.5px;margin:10px 0 0}
+h2{font-size:25px;font-weight:700;letter-spacing:-.014em;margin:66px 0 6px;padding-top:26px;border-top:1px solid var(--rule);line-height:1.24}
+h2 .num{color:var(--crimson);font-variant-numeric:tabular-nums;margin-right:.5em}
+h3{font-size:18.5px;font-weight:600;margin:38px 0 10px;color:var(--ink)}
+h4{font-size:15px;font-weight:600;margin:24px 0 6px;color:var(--slate)}
+p{margin:0 0 16px}
+ul,ol{margin:0 0 18px;padding-left:22px}
+li{margin-bottom:9px}
+strong,b{font-weight:700}
+a{color:var(--crimson);text-decoration-thickness:1px;text-underline-offset:2px}
+.goal{background:var(--panel-warm);border-left:3px solid var(--crimson);padding:15px 20px;margin:18px 0 30px;font-size:15.5px;color:var(--slate)}
+.goal b{color:var(--ink)}
+.m{font-family:Georgia,serif;font-style:italic;white-space:nowrap}
+.m .fn{font-style:normal}
+sub,sup{font-size:.7em;font-style:normal}
+.eq{text-align:center;margin:26px 0;font-size:19px;font-family:Georgia,serif;line-height:1.9}
+.eq.boxed{border:1.5px solid var(--ink);background:#fff;padding:18px 14px;border-radius:2px}
+.eq .label{display:block;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11.5px;font-style:normal;color:var(--muted);letter-spacing:.05em;margin-top:9px}
+.eq.small{font-size:17px}
+.frac{display:inline-block;vertical-align:middle;text-align:center;font-size:.86em;margin:0 .18em}
+.frac .top{display:block;border-bottom:1px solid var(--ink);padding:0 .3em}
+.frac .bot{display:block;padding:0 .3em}
+table{border-collapse:collapse;width:100%;margin:24px 0;font-size:15.5px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:600;color:var(--slate);border-bottom:1.5px solid var(--rule-strong)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.pos{color:var(--pos)}td.neg{color:var(--neg)}
+tr.total td{font-weight:700;border-bottom:none;border-top:1.5px solid var(--ink);background:var(--panel)}
+.note{background:var(--panel);padding:16px 20px;margin:24px 0;border-radius:2px;font-size:16px}
+.note .h{display:block;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:600;color:var(--crimson);letter-spacing:.05em;margin-bottom:7px}
+.note p:last-child{margin-bottom:0}
+.snag{border:1px solid var(--crimson);background:#fff;padding:17px 21px;margin:26px 0;border-radius:2px}
+.snag .h{display:block;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:700;color:var(--crimson);letter-spacing:.04em;margin-bottom:8px}
+.snag p:last-child{margin-bottom:0}
+.verdict{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;padding:9px 14px;border-radius:2px;margin:14px 0 6px;display:inline-block}
+.verdict.yes{background:#e6f1eb;color:var(--pos)}
+.verdict.no{background:#f7e6e9;color:var(--neg)}
+.q{border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);padding:18px 0;margin:34px 0}
+.q .qh{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:600;color:var(--crimson);letter-spacing:.05em;margin-bottom:10px}
+.q p{margin:0 0 14px}
+.q button{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13.5px;font-weight:500;background:var(--ink);color:#fff;border:none;padding:8px 16px;border-radius:2px;cursor:pointer}
+.q button:hover{background:var(--crimson)}
+.q button:focus-visible{outline:2.5px solid var(--crimson-soft);outline-offset:2px}
+.ans{display:none;margin-top:16px;padding-left:16px;border-left:2px solid var(--rule-strong);font-size:16px}
+.ans.open{display:block}
+.ans p:last-child{margin-bottom:0}
+.w{border:1px solid var(--rule-strong);background:#fff;margin:32px 0;border-radius:3px;overflow:hidden}
+.w-head{background:var(--ink);color:#fff;padding:11px 18px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:.02em}
+.w-body{padding:20px}
+.w-body .cap{font-size:14.5px;color:var(--slate);margin:14px 0 0}
+.ctrl{margin-bottom:15px}
+.ctrl label{display:flex;justify-content:flex-start;align-items:baseline;gap:.28em;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;color:var(--slate);margin-bottom:5px}
+.ctrl label .v{font-weight:600;color:var(--crimson);font-variant-numeric:tabular-nums;margin-left:auto}
+input[type=range]{width:100%;accent-color:var(--crimson);height:22px}
+input[type=range]:focus-visible{outline:2.5px solid var(--crimson-soft);outline-offset:3px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;border:1.5px solid var(--rule-strong);background:#fff;color:var(--slate);padding:7px 13px;border-radius:2px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip:focus-visible{outline:2.5px solid var(--crimson-soft);outline-offset:2px}
+.readout{background:var(--panel);padding:13px 16px;margin-top:14px;font-size:15px;border-radius:2px}
+.readout div{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
+.readout .k{color:var(--slate);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px}
+.readout .val{font-variant-numeric:tabular-nums;font-weight:600}
+.readout .hl{color:var(--crimson)}
+svg{display:block;max-width:100%;height:auto;margin:0 auto}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.ledger{border:1px solid var(--rule);border-radius:2px;padding:13px 15px;font-size:14.5px}
+.ledger .lh{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:600;margin-bottom:8px}
+.ledger div.r{display:flex;justify-content:space-between;gap:10px;padding:2px 0;color:var(--slate)}
+.ledger div.r .a{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
+.ledger.dead{opacity:.45}
+.ledger.live{border-color:var(--crimson)}
+.ledger .tot{border-top:1px solid var(--rule-strong);margin-top:7px;padding-top:7px;font-weight:700;color:var(--ink)}
+.toc{background:var(--panel);padding:20px 24px;margin:0 0 40px;border-radius:2px}
+.toc ol{margin:0;padding-left:20px;font-size:15.5px}
+.toc li{margin-bottom:6px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule-strong)}
+.toc a:hover{color:var(--crimson);border-color:var(--crimson)}
+.toc .tp{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;color:var(--crimson);font-weight:600;letter-spacing:.05em;margin:14px 0 6px}
+.toc .tp:first-child{margin-top:0}
+.toc .tr{margin:8px 0 0 20px;font-size:14.5px}
+.toc .tr a{color:var(--crimson);border-color:var(--crimson-soft)}
+h2.rv{border-top:3px solid var(--crimson)}
+.closing{border-top:3px solid var(--ink);margin-top:70px;padding-top:26px}
+.card{border:1.5px solid var(--ink);background:#fff;padding:20px 24px;margin:30px 0;border-radius:2px}
+.card h3{margin-top:0}
+.card table{font-size:14.5px;margin:12px 0}
+@media(max-width:620px){.grid2{grid-template-columns:1fr}h1{font-size:31px}h2{font-size:22px}.part h2.pt{font-size:24px}body{font-size:16.5px}.wrap{padding:0 18px 90px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* standalone-embed overrides */
+body { background:#fff; font-size:16px; }
+.wrap { max-width:820px; padding:0 18px 22px; }
+.embed-head { border-bottom:2px solid var(--ink); padding:18px 0 12px; margin-bottom:4px; }
+.embed-head .kicker { font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:11.5px;
+  letter-spacing:.09em; color:var(--crimson); font-weight:600; margin:0 0 6px; text-transform:uppercase; }
+.embed-head h1 { font-size:21px; margin:0; letter-spacing:-.012em; }
+.w { margin:18px 0 0; }
+.embed-foot { font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:11.5px;
+  color:var(--muted); margin:18px 0 0; padding-top:10px; border-top:1px solid var(--rule); }
+@media(max-width:620px) { .grid2 { grid-template-columns:1fr; } }
+</style></head>
+<body><div class="wrap">
+<div class="embed-head"><p class="kicker">Black-Scholes — moneyness</p><h1>One set of strikes, three coordinate systems</h1></div>
+<div class="w">
+<div class="w-head">One set of strikes, three coordinate systems</div>
+<div class="w-body">
+<div class="grid2">
+<div>
+  <div class="ctrl"><label>Spot <span class="m">S<sub>0</sub></span><span class="v" id="v-ax-s">100</span></label><input type="range" id="ax-s" min="20" max="300" step="1" value="100"></div>
+  <div class="ctrl"><label>Volatility <span class="m">&sigma;</span><span class="v" id="v-ax-v">20%</span></label><input type="range" id="ax-v" min="5" max="90" step="1" value="20"></div>
+  <div class="ctrl"><label>Years <span class="m">T</span><span class="v" id="v-ax-t">1.00</span></label><input type="range" id="ax-t" min="0.05" max="3" step="0.05" value="1"></div>
+</div>
+<div>
+  <div class="ctrl"><label>Rate <span class="m">r</span><span class="v" id="v-ax-r">5.0%</span></label><input type="range" id="ax-r" min="0" max="12" step="0.25" value="5"></div>
+  <div class="ctrl"><label>Dividend yield <span class="m">q</span><span class="v" id="v-ax-q">0.0%</span></label><input type="range" id="ax-q" min="0" max="10" step="0.25" value="0"></div>
+  <div class="ctrl"><label>Strike ladder spacing<span class="v" id="v-ax-k">10</span></label><input type="range" id="ax-k" min="1" max="25" step="1" value="10"></div>
+</div>
+</div>
+<div class="chips">
+  <button class="chip" id="ax-bK" aria-pressed="true" onclick="axBase('K')">Space evenly in strike</button>
+  <button class="chip" id="ax-bx" aria-pressed="false" onclick="axBase('x')">Space evenly in moneyness</button>
+  <button class="chip" id="ax-bd" aria-pressed="false" onclick="axBase('d')">Space evenly in delta</button>
+</div>
+<svg id="ax-svg" viewBox="0 0 700 400" role="img" aria-label="A strike ladder shown on a strike axis, a moneyness axis and a delta axis at once"></svg>
+<div class="readout">
+  <div><span class="k">Forward F</span><span class="val" id="o-ax-f">105.13</span></div>
+  <div><span class="k">One standard deviation, &sigma;&radic;T</span><span class="val" id="o-ax-sd">20.0%</span></div>
+  <div><span class="k">Step between the three strikes, in standard deviations</span><span class="val hl" id="o-ax-gap">0.10</span></div>
+  <div><span class="k">Delta at the forward</span><span class="val" id="o-ax-df">54.0</span></div>
+</div>
+<p class="cap">Each vertical line is one strike, read three ways: its price, its moneyness, its call delta. Switch between the spacings. An evenly spaced strike ladder is not evenly spaced in moneyness, and neither is evenly spaced in delta. Space evenly in delta and the wing strikes fly apart while the near-the-money strikes bunch together: delta is the moneyness axis pushed through the normal curve after a half-step shift, <span class="m">&Delta; = e<sup>&minus;qT</sup>N(&minus;x + &sigma;&radic;T/2)</span>, and the normal curve squashes its tails. The density is drawn against log price here, so it is a symmetric bell whose peak sits half a step left of the forward.</p>
+</div>
+</div>
+
+</div>
+<script>
+
+function t(id){var e=document.getElementById(id);e.classList.toggle('open');
+  var b=e.previousElementSibling;b.textContent=e.classList.contains('open')?'Hide answer':'Show answer';}
+function N(x){var a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  var s=x<0?-1:1;x=Math.abs(x)/Math.SQRT2;var tt=1/(1+p*x);
+  var y=1-(((((a5*tt+a4)*tt+a3)*tt+a2)*tt+a1)*tt)*Math.exp(-x*x);return 0.5*(1+s*y);}
+function bs(S,K,r,q,v,T){ // European call and put with continuous yield q
+  if(T<=0){return {c:Math.max(S-K,0),p:Math.max(K-S,0)};}
+  var sd=v*Math.sqrt(T), d1=(Math.log(S/K)+(r-q+v*v/2)*T)/sd, d2=d1-sd;
+  var c=S*Math.exp(-q*T)*N(d1)-K*Math.exp(-r*T)*N(d2);
+  var p=K*Math.exp(-r*T)*N(-d2)-S*Math.exp(-q*T)*N(-d1);
+  return {c:c,p:p};}
+function f(x,n){return x.toFixed(n===undefined?2:n);}
+function sg(x,n){return (x>=0?'+':'\u2212')+f(Math.abs(x),n);}
+var C={ink:'#1c2530',slate:'#3d4d5c',muted:'#70808f',crim:'#9b2335',crimS:'#c4415a',rule:'#d5dbe0',panel:'#f1f4f6',pos:'#1f6b45'};
+function el(tag,at){var e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(var k in at)e.setAttribute(k,at[k]);return e;}
+function txt(x,y,s,at){var e=el('text',at||{});e.setAttribute('x',x);e.setAttribute('y',y);
+  e.setAttribute('font-family',"'Helvetica Neue',Helvetica,Arial,sans-serif");
+  if(!e.getAttribute('font-size'))e.setAttribute('font-size','12');
+  if(!e.getAttribute('fill'))e.setAttribute('fill',C.slate);e.textContent=s;return e;}
+function g(id){return document.getElementById(id);}
+function bind(ids,fn){ids.forEach(function(i){g(i).addEventListener('input',fn);});fn();}
+
+/* ================= STRIKE, MONEYNESS, DELTA ================= */
+function Ninv(p){ // Acklam's rational approximation
+  if(p<=0)return -8;if(p>=1)return 8;
+  var a=[-3.969683028665376e1,2.209460984245205e2,-2.759285104469687e2,1.383577518672690e2,-3.066479806614716e1,2.506628277459239],
+      b=[-5.447609879822406e1,1.615858368580409e2,-1.556989798598866e2,6.680131188771972e1,-1.328068155288572e1],
+      c=[-7.784894002430293e-3,-3.223964580411365e-1,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],
+      d=[7.784695709041462e-3,3.224671290700398e-1,2.445134137142996,3.754408661907416],pl=0.02425,q,r;
+  if(p<pl){q=Math.sqrt(-2*Math.log(p));return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  if(p<=1-pl){q=p-0.5;r=q*q;return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  q=Math.sqrt(-2*Math.log(1-p));return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+var AXB='K';
+function axBase(b){AXB=b;['K','x','d'].forEach(function(k){g('ax-b'+k).setAttribute('aria-pressed',k===b);});axDraw();}
+function axDraw(){
+  var S=+g('ax-s').value,vol=+g('ax-v').value/100,T=+g('ax-t').value,r=+g('ax-r').value/100,q=+g('ax-q').value/100,step=+g('ax-k').value;
+  g('v-ax-s').textContent=S;g('v-ax-v').textContent=f(vol*100,0)+'%';g('v-ax-t').textContent=f(T);
+  g('v-ax-r').textContent=f(r*100,1)+'%';g('v-ax-q').textContent=f(q*100,1)+'%';g('v-ax-k').textContent=step;
+  var F=S*Math.exp((r-q)*T),sT=vol*Math.sqrt(T),dq=Math.exp(-q*T);
+  var toX=function(K){return Math.log(K/F)/sT;}, toK=function(x){return F*Math.exp(x*sT);};
+  var toD=function(x){return dq*N(-x+sT/2);}, dToX=function(D){return sT/2-Ninv(D/dq);};
+  g('o-ax-f').textContent=f(F);g('o-ax-sd').textContent=f(sT*100,1)+'%';
+  g('o-ax-gap').textContent=f(sT/2,2);g('o-ax-df').textContent=f(toD(0)*100,1);
+  var xlo=-2.6,xhi=2.6,s=g('ax-svg');s.innerHTML='';
+  var L=84,R=662,TOP=18,DEN=112,ROW=[188,258,328];
+  function PX(x){return L+(x-xlo)/(xhi-xlo)*(R-L);}
+  var lad=[];
+  if(AXB==='K'){var k0=Math.ceil(toK(xlo)/step)*step;for(var K=k0;K<=toK(xhi);K+=step){if(K>0)lad.push(K);}}
+  else if(AXB==='x'){for(var xv=-2.5;xv<=2.51;xv+=0.5)lad.push(toK(xv));}
+  else{[0.02,0.05,0.10,0.25,0.50,0.75,0.90,0.95,0.98].forEach(function(D){var xv=dToX(D*dq);if(xv>xlo&&xv<xhi)lad.push(toK(xv));});}
+  lad.sort(function(a,b){return a-b;});
+  // density in log space: a symmetric bell centred half a step left of the forward
+  var pts=[],mx=0;for(var x2=xlo;x2<=xhi;x2+=0.02){var z=x2+sT/2,p=Math.exp(-z*z/2);pts.push([x2,p]);if(p>mx)mx=p;}
+  var dp='';pts.forEach(function(pt,i){dp+=(i?'L':'M')+PX(pt[0])+' '+(DEN-pt[1]/mx*(DEN-TOP));});
+  s.appendChild(el('path',{d:dp+'L'+PX(xhi)+' '+DEN+'L'+PX(xlo)+' '+DEN+'Z',fill:C.crimS,opacity:0.13,stroke:'none'}));
+  s.appendChild(el('path',{d:dp,fill:'none',stroke:C.ink,'stroke-width':1.6}));
+  s.appendChild(txt(L,TOP,'log-price density',{'font-size':'11',fill:C.muted}));
+  s.appendChild(el('line',{x1:PX(0),y1:TOP,x2:PX(0),y2:ROW[2]+8,stroke:C.crim,'stroke-width':1.2,'stroke-dasharray':'4 4'}));
+  s.appendChild(txt(PX(0)+5,TOP,'F = '+f(F),{'font-size':'11.5',fill:C.crim,'font-weight':'600'}));
+  var rows=[['strike',function(K){return f(K,step<2?1:0);},C.ink],['moneyness x',function(K){return f(toX(K),2);},C.slate],['call delta',function(K){return f(toD(toX(K))*100,1);},C.crim]];
+  rows.forEach(function(rw,ri){s.appendChild(el('line',{x1:L,y1:ROW[ri],x2:R,y2:ROW[ri],stroke:C.rule,'stroke-width':1.4}));
+    s.appendChild(txt(L-6,ROW[ri]+4,rw[0],{'font-size':'11.5',fill:rw[2],'text-anchor':'end','font-weight':'600'}));});
+  var last=[-999,-999,-999];
+  lad.forEach(function(K){var x=toX(K);if(x<xlo||x>xhi)return;var px=PX(x);
+    s.appendChild(el('line',{x1:px,y1:DEN,x2:px,y2:ROW[2],stroke:C.rule,'stroke-width':0.9}));
+    rows.forEach(function(rw,ri){var y=ROW[ri];
+      s.appendChild(el('line',{x1:px,y1:y-5,x2:px,y2:y+5,stroke:rw[2],'stroke-width':1.4}));
+      if(px-last[ri]>30){s.appendChild(txt(px,y-11,rw[1](K),{'font-size':'10.5',fill:rw[2],'text-anchor':'middle'}));last[ri]=px;}});});
+  var x50=dToX(0.5*dq);
+  if(x50>xlo&&x50<xhi){s.appendChild(el('circle',{cx:PX(x50),cy:ROW[2],r:4,fill:C.crim}));
+    s.appendChild(txt(PX(x50),ROW[2]+20,'50 delta at K = '+f(toK(x50)),{'font-size':'11.5',fill:C.crim,'text-anchor':'middle','font-weight':'600'}));}
+  s.appendChild(txt(L,ROW[2]+50,'ladder spaced evenly in '+(AXB==='K'?'strike':AXB==='x'?'moneyness':'delta'),{'font-size':'11.5',fill:C.muted}));
+}
+bind(['ax-s','ax-v','ax-t','ax-r','ax-q','ax-k'],axDraw);
+
+
+
+</script></body></html>
