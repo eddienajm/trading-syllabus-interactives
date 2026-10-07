@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strike, moneyness and delta</title>
+<style>
+
+:root{
+  --ink:#1c2530;--slate:#3d4d5c;--muted:#70808f;
+  --crimson:#9b2335;--blue:#2f5d8a;--green:#1f6b45;--gold:#a8741a;
+  --paper:#fbfaf8;--panel:#f1f4f6;--rule:#d5dbe0;--rule-strong:#aab5bf;--card:#ffffff;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#e6ebf0;--slate:#b8c4cf;--muted:#8a99a8;
+    --crimson:#e0728a;--blue:#7fb0e0;--green:#6fcf97;--gold:#e0b060;
+    --paper:#14181d;--panel:#1d242b;--rule:#2c363f;--rule-strong:#47535e;--card:#181e24;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#e6ebf0;--slate:#b8c4cf;--muted:#8a99a8;
+  --crimson:#e0728a;--blue:#7fb0e0;--green:#6fcf97;--gold:#e0b060;
+  --paper:#14181d;--panel:#1d242b;--rule:#2c363f;--rule-strong:#47535e;--card:#181e24;
+}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.65}
+.wrap{max-width:780px;margin:0 auto;padding:0 22px 110px}
+h1,h2,h3,.sans{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}
+.masthead{border-bottom:3px solid var(--ink);padding:48px 0 22px;margin-bottom:26px}
+.kicker{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;letter-spacing:.09em;color:var(--crimson);font-weight:600;margin:0 0 12px}
+h1{font-size:36px;line-height:1.14;font-weight:700;letter-spacing:-.02em;margin:0 0 14px}
+.standfirst{font-size:18px;color:var(--slate);margin:0;line-height:1.55}
+h2{font-size:23px;font-weight:700;letter-spacing:-.012em;margin:58px 0 6px;padding-top:22px;border-top:1px solid var(--rule);line-height:1.25}
+h2 .num{color:var(--crimson);margin-right:.5em}
+h3{font-size:17.5px;font-weight:600;margin:30px 0 8px}
+p{margin:0 0 14px}
+.m{font-style:italic;white-space:nowrap}
+.m sub,.m sup{font-size:.72em;line-height:0}
+.setup{background:var(--panel);border-left:3px solid var(--crimson);padding:13px 18px;margin:20px 0;font-size:16px;border-radius:2px}
+.eq{background:var(--panel);padding:14px 18px;margin:18px 0;text-align:center;font-size:19px;border-radius:2px}
+.eq .lab{display:block;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;color:var(--muted);margin-top:6px;font-style:normal}
+.goal{background:var(--panel);padding:13px 18px;border-radius:2px;margin:16px 0 22px;font-size:16px}
+ul{padding-left:22px;margin:0 0 14px}li{margin-bottom:6px}
+table{border-collapse:collapse;width:100%;margin:16px 0 20px;font-size:15px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--rule);text-align:left}
+th{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:600;color:var(--slate);border-bottom:2px solid var(--rule-strong)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.hl td{background:var(--panel);font-weight:600}
+.cardw{background:var(--card);border:1px solid var(--rule);border-radius:3px;margin:22px 0}
+.cardw .head{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:600;color:var(--crimson);letter-spacing:.05em;padding:11px 16px;border-bottom:1px solid var(--rule)}
+.cardw .body{padding:14px 16px 16px}
+.cap{font-size:14.5px;color:var(--slate);margin:10px 0 14px}
+svg{display:block;max-width:100%;height:auto;margin:0 auto}
+.tk{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;fill:var(--muted)}
+.tl{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;fill:var(--ink)}
+.tb{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600}
+.axl{stroke:var(--rule-strong);stroke-width:1;fill:none}
+.grid{stroke:var(--rule);stroke-width:1}
+.ctrl-bar{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--rule);padding:10px 0 8px;margin:0 0 6px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px 18px}
+.ctrl-bar .presets{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctrl-bar .presets span{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;color:var(--muted)}
+@media(max-width:640px){.ctrl-bar{position:static;grid-template-columns:1fr}}
+.ctrl label{display:flex;gap:.3em;align-items:baseline;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;color:var(--slate);margin-bottom:3px}
+.ctrl label b{margin-left:auto;color:var(--crimson);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--crimson);height:22px;margin:0}
+.chip{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;border:1.5px solid var(--rule-strong);background:var(--card);color:var(--slate);padding:6px 12px;border-radius:2px;cursor:pointer}
+.chip:hover{border-color:var(--ink)}
+.chip:focus-visible,input[type=range]:focus-visible,summary:focus-visible{outline:2.5px solid var(--crimson);outline-offset:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px}
+.readout div{background:var(--panel);padding:8px 11px;border-radius:2px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;color:var(--slate)}
+.readout div b{display:block;font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:1px}
+.readout div.hot b{color:var(--crimson)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;color:var(--slate);margin-top:8px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.rows{display:grid;grid-template-columns:150px 1fr 1fr;gap:6px 10px;align-items:center;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;margin:12px 0 4px}
+.rows .hd{color:var(--muted);font-size:12px}
+.bar{height:22px;border-radius:2px;background:var(--blue);color:#fff;font-size:12px;line-height:22px;padding-left:8px;white-space:nowrap}
+.bar.c{background:var(--crimson)}.bar.z{background:var(--rule-strong);color:var(--ink)}.bar.g{background:var(--green)}
+details{background:var(--panel);border-radius:2px;margin:10px 0;padding:10px 16px}
+summary{cursor:pointer;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600}
+details p{margin:10px 0 0;font-size:16px}
+.q{margin:18px 0}
+.q p.qq{margin-bottom:6px}
+
+/* standalone-embed overrides */
+.wrap { max-width:820px; padding:4px 16px 18px; }
+.ctrl-bar { position:static; }
+.embed-head { border-bottom:2px solid var(--ink); padding:16px 0 10px; margin-bottom:8px; }
+.embed-head h1 { font-size:20px; margin:0; letter-spacing:-.012em; }
+.cardw { margin:12px 0 0; }
+[hidden] { display:none !important; }
+</style></head>
+<body><div class="wrap">
+<div class="ctrl-bar" id="bar" style="grid-template-columns:repeat(2,1fr)">
+  <div class="ctrl"><label>Volatility <span class="m">&sigma;</span><b id="v-sig">20%</b></label><input type="range" id="sig" min="10" max="50" step="1" value="20" aria-label="Volatility"></div>
+  <div class="ctrl"><label>Time to expiry <span class="m">T</span> (years)<b id="v-T">1.00</b></label><input type="range" id="T" min="0.1" max="2" step="0.05" value="1" aria-label="Time to expiry in years"></div>
+  <div class="ctrl" hidden><label>Strike <span class="m">K</span><b id="v-K">100.0</b></label><input type="range" id="K" min="60" max="165" step="any" value="100" aria-label="Strike"></div>
+  <div class="presets" hidden><span>Jump the strike to:</span>
+    <button class="chip" data-p="med">the median</button>
+    <button class="chip" data-p="fwd">the forward</button>
+    <button class="chip" data-p="d50">the 50 delta strike</button>
+  </div>
+</div>
+<div class="cardw" hidden>
+<div class="head">THE TREE BECOMES A BELL CURVE</div>
+<div class="body">
+  <div class="ctrl" style="max-width:340px"><label>Number of steps <span class="m">n</span><b id="v-n">4</b></label><input type="range" id="n" min="1" max="60" step="1" value="4" aria-label="Number of steps"></div>
+  <svg id="svgA0" viewBox="0 0 680 270" role="img" aria-label="Recombining binomial tree of share prices"></svg>
+  <div class="grid2">
+    <div><svg id="svgA1" viewBox="0 0 330 250" role="img" aria-label="Histogram of end prices on a price axis with the lognormal curve over it"></svg></div>
+    <div><svg id="svgA2" viewBox="0 0 330 250" role="img" aria-label="The same histogram on a log-price axis, symmetric"></svg></div>
+  </div>
+  <div class="readout" id="roA"></div>
+  <p class="cap">Left: the end-prices on an ordinary price axis. The right tail is long, so the mean (100) is dragged above the median. Right: the <em>same</em> bars on a log axis. Symmetric. The curve over the bars is the lognormal. Raise <span class="m">n</span> and the bars hug the curve. The tilt of <span class="m">p</span> above 50% is what carries the drift: <span class="m">p &asymp; &frac12; + (r &minus; &sigma;&sup2;/2)&radic;&Delta;t / 2&sigma;</span>. It shrinks as the steps get smaller (53.8% with 4 steps, about 51% with 60) because there are more steps to accumulate the same drift.</p>
+</div>
+</div>
+<div class="cardw" hidden>
+<div class="head">THE LADDER OF "AT THE MONEY" STRIKES</div>
+<div class="body">
+  <svg id="svgD" viewBox="0 0 680 210" role="img" aria-label="Log-price ruler showing median, forward and 50 delta strike"></svg>
+  <p class="cap">A zoomed ruler in <b>log price</b>, marked in standard deviations. The median, the forward and the 50 delta strike are evenly spaced, each <span class="m">&sigma;&sup2;T/2</span> apart in logs. At ordinary volatilities they are only about a tenth of a standard deviation apart; raise <span class="m">&sigma;</span> or <span class="m">T</span> and they fan out.</p>
+</div>
+</div>
+<div class="cardw" hidden>
+<div class="head">STRIKE EXPLORER &middot; drag the strike slider above</div>
+<div class="body">
+  <svg id="svgB1" viewBox="0 0 680 310" role="img" aria-label="Lognormal density, share-weighted density, and the area above the strike"></svg>
+  <div class="legend">
+    <span><i style="background:var(--crimson);opacity:.45"></i>area right of <span class="m">K</span> under the grey curve = <b><span class="m">N(d<sub>2</sub>)</span></b> (chance of paying: finishing above <span class="m">K</span>)</span>
+    <span><i style="background:var(--blue);opacity:.45"></i>area right of <span class="m">K</span> under the blue curve = <b><span class="m">N(d<sub>1</sub>)</span></b> = delta</span>
+  </div>
+  <svg id="svgB2" viewBox="0 0 680 180" role="img" aria-label="N(d2) and delta plotted against strike" style="margin-top:14px"></svg>
+  <div class="readout" id="roB"></div>
+  <p class="cap">Lower panel: the same two numbers for every strike. <span class="m">N(d<sub>2</sub>)</span> crosses 50% at the <b>median</b>. Delta crosses 50% further right, at the <b>50 delta strike</b>. Try the three jump buttons.</p>
+</div>
+</div>
+<div class="cardw" hidden>
+<div class="head">DELTA IS THE SLOPE OF THE CALL PRICE</div>
+<div class="body">
+  <div class="ctrl" style="max-width:340px"><label>Spot price <span class="m">S</span><b id="v-S">95.12</b></label><input type="range" id="S" min="50" max="150" step="0.01" value="95.12" aria-label="Spot price"></div>
+  <svg id="svgC" viewBox="0 0 680 284" role="img" aria-label="Call price against spot with a tangent line whose slope is delta"></svg>
+  <div class="readout" id="roC"></div>
+  <p class="cap">Solid curve: the call's value today. Dashed hinge: what it pays at expiry. The red tangent has slope delta: near 0 when the strike is far above spot, near 1 when it is far below, about a half in between.</p>
+</div>
+</div>
+<div class="cardw">
+<div class="head">STRIKE &#8596; MONEYNESS &#8596; DELTA</div>
+<div class="body">
+  <table id="tblD"></table>
+  <p class="cap">Evenly spaced <em>strikes</em> are not evenly spaced in moneyness, and the delta column is an S-curve: it barely moves in the wings and changes fastest near the money. Change <span class="m">&sigma;</span> and <span class="m">T</span> and watch the same strikes slide to different moneyness.</p>
+</div>
+</div>
+</div>
+<script>
+(function(){
+"use strict";
+var R=0.05, F=100;
+var $=function(id){return document.getElementById(id);};
+var PI2=Math.sqrt(2*Math.PI);
+
+/* ---- normal cdf (West/Hart, double precision) ---- */
+function N(x){
+  var a=Math.abs(x),n;
+  if(a>37){n=0;}
+  else{
+    var e=Math.exp(-a*a/2);
+    if(a<7.07106781186547){
+      var b=0.0352624965998911*a+0.700383064443688;
+      b=b*a+6.37396220353165;b=b*a+33.912866078383;b=b*a+112.079291497871;b=b*a+221.213596169931;b=b*a+220.206867912376;
+      n=e*b;
+      var d=0.0883883476483184*a+1.75566716318264;
+      d=d*a+16.064177579207;d=d*a+86.7807322029461;d=d*a+296.564248779674;d=d*a+637.333633378831;d=d*a+793.826512519948;d=d*a+440.413735824752;
+      n=n/d;
+    }else{
+      var c=a+0.65;c=a+4/c;c=a+3/c;c=a+2/c;c=a+1/c;n=e/c/2.506628274631;
+    }
+  }
+  return x>0?1-n:n;
+}
+function bsCall(S,K,sig,T){
+  var s=sig*Math.sqrt(T),d1=(Math.log(S/K)+(R+sig*sig/2)*T)/s,d2=d1-s;
+  return {c:S*N(d1)-K*Math.exp(-R*T)*N(d2),delta:N(d1),d1:d1,d2:d2};
+}
+function ticksFor(a,b,maxn){
+  var span=b-a,steps=[1,2,5,10,20,25,50,100,200,500],st=steps[steps.length-1],i;
+  for(i=0;i<steps.length;i++){if(span/steps[i]<=(maxn||8)){st=steps[i];break;}}
+  var out=[];for(var v=Math.ceil(a/st)*st;v<=b+1e-9;v+=st)out.push(v);return out;
+}
+var f1=function(x,d){return x.toFixed(d===undefined?1:d).replace('-','\u2212');};
+
+/* ---- shared state ---- */
+var P={};
+function readState(){
+  P.sig=(+$("sig").value)/100;P.T=+$("T").value;
+  P.s=P.sig*Math.sqrt(P.T);
+  P.m=Math.log(F)-P.s*P.s/2;
+  P.med=Math.exp(P.m);P.k50=F*Math.exp(P.s*P.s/2);
+  P.S0=F*Math.exp(-R*P.T);
+  P.xmin=Math.exp(P.m-2.8*P.s);P.xmax=Math.exp(P.m+2.8*P.s);
+  var K=$("K");
+  var lo=Math.ceil(P.xmin),hi=Math.floor(P.xmax);
+  K.min=lo;K.max=hi;
+  var kv=+K.value;if(kv<lo)kv=lo;if(kv>hi)kv=hi;K.value=kv;P.K=+K.value;
+  $("v-sig").textContent=Math.round(P.sig*100)+"%";
+  $("v-T").textContent=P.T.toFixed(2);
+  $("v-K").textContent=P.K.toFixed(1);
+  P.n=+$("n").value;$("v-n").textContent=P.n;
+}
+function lnpdf(S){var z=(Math.log(S)-P.m)/P.s;return Math.exp(-0.5*z*z)/(S*P.s*PI2);}
+
+/* ---- Widget A ---- */
+var LF=[0];for(var li=1;li<=200;li++)LF[li]=LF[li-1]+Math.log(li);
+function drawA(){
+  var n=P.n,dt=P.T/n,u=Math.exp(P.sig*Math.sqrt(dt)),d=1/u,p=(Math.exp(R*dt)-d)/(u-d);
+  var pk=[],k,S0=P.S0;
+  for(k=0;k<=n;k++){pk[k]=Math.exp(LF[n]-LF[k]-LF[n-k]+k*Math.log(p)+(n-k)*Math.log(1-p));}
+  var Sk=function(j){return S0*Math.pow(u,2*j-n);};
+  var mean=0,cum=0,tmed=null;
+  for(k=0;k<=n;k++){mean+=pk[k]*Sk(k);cum+=pk[k];if(tmed===null&&cum>=0.5)tmed=Sk(k);}
+  /* tree */
+  var t="";
+  if(n<=6){
+    var W=680,H=270,ml=70,mr=110,cy=H/2,ys=Math.min(26,(H/2-24)/n),dx=(W-ml-mr)/n;
+    var X=function(i){return ml+i*dx;},Y=function(i,j){return cy-(2*j-i)*ys;};
+    var i,j;
+    for(i=0;i<n;i++){for(j=0;j<=i;j++){
+      t+='<line x1="'+X(i)+'" y1="'+Y(i,j)+'" x2="'+X(i+1)+'" y2="'+Y(i+1,j+1)+'" class="axl" stroke="var(--slate)"/>';
+      t+='<line x1="'+X(i)+'" y1="'+Y(i,j)+'" x2="'+X(i+1)+'" y2="'+Y(i+1,j)+'" class="axl" stroke="var(--slate)"/>';
+    }}
+    for(i=0;i<=n;i++){for(j=0;j<=i;j++){
+      var pr=S0*Math.pow(u,2*j-i),x=X(i),y=Y(i,j);
+      t+='<circle cx="'+x+'" cy="'+y+'" r="3.2" fill="var(--slate)"/>';
+      if(i===n){
+        t+='<text x="'+(x+9)+'" y="'+(y+4)+'" class="tl">'+f1(pr)+'</text><text x="'+(x+52)+'" y="'+(y+4)+'" class="tk">'+f1(pk[j]*100)+'%</text>';
+      }else if(i===0){
+        t+='<text x="'+(x-8)+'" y="'+(y+4)+'" text-anchor="end" class="tl">'+f1(pr,2)+'</text>';
+      }else{
+        t+='<text x="'+x+'" y="'+(y-7)+'" text-anchor="middle" class="tk">'+f1(pr)+'</text>';
+      }
+    }}
+    t+='<text x="'+((X(0)+X(1))/2-6)+'" y="'+((Y(0,0)+Y(1,1))/2-6)+'" text-anchor="end" class="tb" fill="var(--blue)">&times;u = '+f1(u,3)+'</text>';
+    t+='<text x="'+((X(0)+X(1))/2-6)+'" y="'+((Y(0,0)+Y(1,0))/2+16)+'" text-anchor="end" class="tb" fill="var(--crimson)">&divide;u = '+f1(d,3)+'</text>';
+    t+='<text x="'+(X(n)+9)+'" y="14" class="tk">end price &nbsp;chance</text>';
+    t+='<text x="'+(ml)+'" y="'+(H-8)+'" class="tk">start = spot '+f1(S0,2)+', forward 100. Up-chance p = '+f1(p*100,1)+'%.</text>';
+    $("svgA0").setAttribute("viewBox","0 0 "+W+" "+H);
+    $("svgA0").style.display="block";
+    $("svgA0").innerHTML=t;
+  }else{
+    $("svgA0").setAttribute("viewBox","0 0 680 40");
+    $("svgA0").innerHTML='<text x="340" y="24" text-anchor="middle" class="tk">With more than 6 steps the tree is too dense to draw. The bars below carry on with all '+n+' steps.</text>';
+  }
+  /* histogram helpers */
+  function panel(id,logAxis){
+    var W=330,H=250,ml=8,mr=8,mt=34,mb=36,pw=W-ml-mr,ph=H-mt-mb;
+    var a=logAxis?Math.log(P.xmin):P.xmin,b=logAxis?Math.log(P.xmax):P.xmax;
+    var sx=function(x){return ml+(x-a)/(b-a)*pw;};
+    var dens=[],ymax=0,kk;
+    var w2=2*Math.log(u);
+    for(kk=0;kk<=n;kk++){
+      var dd=logAxis?pk[kk]/w2:pk[kk]/(Sk(kk)*(u-d));
+      dens[kk]=dd;if(dd>ymax)ymax=dd;
+    }
+    var curve=[],NS=140,q,xv,yv;
+    for(q=0;q<=NS;q++){
+      xv=a+(b-a)*q/NS;
+      yv=logAxis?Math.exp(-0.5*Math.pow((xv-P.m)/P.s,2))/(P.s*PI2):lnpdf(xv);
+      curve.push([xv,yv]);if(yv>ymax)ymax=yv;
+    }
+    ymax*=1.08;
+    var sy=function(y){return mt+ph*(1-y/ymax);};
+    var s2="";
+    /* bars */
+    for(kk=0;kk<=n;kk++){
+      var lo=logAxis?Math.log(Sk(kk))-w2/2:Sk(kk)/u, hi=logAxis?Math.log(Sk(kk))+w2/2:Sk(kk)*u;
+      var x0=Math.max(sx(lo),ml),x1=Math.min(sx(hi),ml+pw);
+      if(x1<=x0)continue;
+      s2+='<rect x="'+x0+'" y="'+sy(dens[kk])+'" width="'+Math.max(x1-x0-(n>20?0.4:1),0.5)+'" height="'+(sy(0)-sy(dens[kk]))+'" fill="var(--blue)" opacity=".38"/>';
+    }
+    var path="";for(q=0;q<curve.length;q++){path+=(q?"L":"M")+sx(curve[q][0]).toFixed(1)+","+sy(curve[q][1]).toFixed(1);}
+    s2+='<path d="'+path+'" fill="none" stroke="var(--ink)" stroke-width="1.8"/>';
+    s2+='<line x1="'+ml+'" y1="'+sy(0)+'" x2="'+(ml+pw)+'" y2="'+sy(0)+'" class="axl"/>';
+    /* ticks */
+    var tk=logAxis?[25,50,75,100,150,200,300,400,500].filter(function(v){return v>=P.xmin&&v<=P.xmax;}):ticksFor(P.xmin,P.xmax,5);
+    tk.forEach(function(v){var xx=sx(logAxis?Math.log(v):v);
+      s2+='<line x1="'+xx+'" y1="'+sy(0)+'" x2="'+xx+'" y2="'+(sy(0)+4)+'" class="axl"/><text x="'+xx+'" y="'+(sy(0)+16)+'" text-anchor="middle" class="tk">'+v+'</text>';});
+    /* markers */
+    var xm=sx(logAxis?P.m:P.med),xf=sx(logAxis?Math.log(F):F);
+    s2+='<line x1="'+xm+'" y1="'+(mt-6)+'" x2="'+xm+'" y2="'+sy(0)+'" stroke="var(--crimson)" stroke-width="1.5" stroke-dasharray="4 3"/>';
+    s2+='<line x1="'+xf+'" y1="'+(mt-6)+'" x2="'+xf+'" y2="'+sy(0)+'" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 3"/>';
+    s2+='<text x="'+(xm-4)+'" y="'+(mt-14)+'" text-anchor="end" class="tb" fill="var(--crimson)">median '+f1(P.med)+'</text>';
+    s2+='<text x="'+(xf+4)+'" y="'+(mt-14)+'" class="tb" fill="var(--ink)">mean '+f1(F)+'</text>';
+    s2+='<text x="'+(W/2)+'" y="'+(H-6)+'" text-anchor="middle" class="tk">'+(logAxis?'log price (same bars, same curve)':'share price at expiry')+'</text>';
+    $(id).innerHTML=s2;
+  }
+  panel("svgA1",false);panel("svgA2",true);
+  $("roA").innerHTML=
+    '<div>Up factor (price &times; this)<b>&times;'+f1(u,3)+' (+'+f1((u-1)*100,1)+'%)</b></div>'+
+    '<div>Up-chance p (50% = no drift)<b>'+f1(p*100,1)+'%</b></div>'+
+    '<div>Average end price<b>'+f1(mean,2)+'</b></div>'+
+    '<div class="hot">Lognormal median<b>'+f1(P.med,2)+'</b></div>';
+}
+
+/* ---- Widget B ---- */
+function drawB(){
+  var W=680,H=310,ml=34,mr=14,mt=72,mb=44,pw=W-ml-mr,ph=H-mt-mb;
+  var sx=function(x){return ml+(x-P.xmin)/(P.xmax-P.xmin)*pw;};
+  var NS=240,q,xs=[],fv=[],gv=[],ymax=0;
+  for(q=0;q<=NS;q++){var x=P.xmin+(P.xmax-P.xmin)*q/NS;xs.push(x);var fx=lnpdf(x),gx=x*fx/F;fv.push(fx);gv.push(gx);if(fx>ymax)ymax=fx;if(gx>ymax)ymax=gx;}
+  ymax*=1.06;
+  var sy=function(y){return mt+ph*(1-y/ymax);};
+  var s="",path;
+  function curvePath(arr){var p="";for(var i=0;i<arr.length;i++)p+=(i?"L":"M")+sx(xs[i]).toFixed(1)+","+sy(arr[i]).toFixed(1);return p;}
+  function tail(arr,fill,op){
+    var p="M"+sx(P.K)+","+sy(0),i;
+    var yk=(P.K<=xs[0])?arr[0]:null;
+    var ykv=(function(){var xv=P.K;var z=(Math.log(xv)-P.m)/P.s;var fx=Math.exp(-0.5*z*z)/(xv*P.s*PI2);return arr===fv?fx:xv*fx/F;})();
+    p+="L"+sx(P.K)+","+sy(ykv);
+    for(i=0;i<xs.length;i++){if(xs[i]>P.K)p+="L"+sx(xs[i]).toFixed(1)+","+sy(arr[i]).toFixed(1);}
+    p+="L"+sx(P.xmax)+","+sy(0)+"Z";
+    return '<path d="'+p+'" fill="'+fill+'" opacity="'+op+'"/>';
+  }
+  s+=tail(fv,"var(--crimson)",.42)+tail(gv,"var(--blue)",.32);
+  s+='<path d="'+curvePath(fv)+'" fill="none" stroke="var(--slate)" stroke-width="2"/>';
+  s+='<path d="'+curvePath(gv)+'" fill="none" stroke="var(--blue)" stroke-width="2"/>';
+  s+='<line x1="'+ml+'" y1="'+sy(0)+'" x2="'+(ml+pw)+'" y2="'+sy(0)+'" class="axl"/>';
+  ticksFor(P.xmin,P.xmax,9).forEach(function(v){var xx=sx(v);s+='<line x1="'+xx+'" y1="'+sy(0)+'" x2="'+xx+'" y2="'+(sy(0)+4)+'" class="axl"/><text x="'+xx+'" y="'+(sy(0)+17)+'" text-anchor="middle" class="tk">'+v+'</text>';});
+  var mk=[["median",P.med,"var(--crimson)"],["forward",F,"var(--ink)"],["50 delta",P.k50,"var(--blue)"]];
+  mk.forEach(function(o,i){
+    var xx=sx(o[1]),ly=14+i*15;
+    s+='<line x1="'+xx+'" y1="'+(ly+3)+'" x2="'+xx+'" y2="'+sy(0)+'" stroke="'+o[2]+'" stroke-width="1.2" stroke-dasharray="3 3" opacity=".9"/>';
+    var right=xx>W-120;
+    s+='<text x="'+(right?xx-4:xx+4)+'" y="'+(ly+1)+'" text-anchor="'+(right?"end":"start")+'" class="tb" fill="'+o[2]+'">'+o[0]+' '+f1(o[1])+'</text>';
+  });
+  var xk=sx(P.K);
+  s+='<line x1="'+xk+'" y1="'+(mt-4)+'" x2="'+xk+'" y2="'+sy(0)+'" stroke="var(--ink)" stroke-width="2.4"/>';
+  s+='<polygon points="'+(xk-5)+','+(mt-4)+' '+(xk+5)+','+(mt-4)+' '+xk+','+(mt+4)+'" fill="var(--ink)"/>';
+  s+='<text x="'+xk+'" y="'+(mt+17)+'" text-anchor="'+(xk>W-80?"end":"start")+'" dx="'+(xk>W-80?-6:6)+'" class="tb" fill="var(--ink)">K = '+f1(P.K)+'</text>';
+  s+='<text x="'+(ml+pw)+'" y="'+(H-6)+'" text-anchor="end" class="tk">share price at expiry</text>';
+  $("svgB1").innerHTML=s;
+
+  /* lower: N(d2) and N(d1) against strike */
+  var W2=680,H2=180,mt2=14,mb2=28,ph2=H2-mt2-mb2;
+  var sy2=function(y){return mt2+ph2*(1-y);};
+  var s2="",pd2="",pd1="",i,Kx,d2v,d1v;
+  [0,0.25,0.5,0.75,1].forEach(function(v){s2+='<line x1="'+ml+'" y1="'+sy2(v)+'" x2="'+(ml+pw)+'" y2="'+sy2(v)+'" class="grid" '+(v===0.5?'stroke-dasharray="4 3" stroke="var(--rule-strong)"':'')+'/><text x="'+(ml-5)+'" y="'+(sy2(v)+4)+'" text-anchor="end" class="tk">'+Math.round(v*100)+'%</text>';});
+  for(i=0;i<=NS;i++){Kx=xs[i];d2v=(Math.log(F/Kx)-P.s*P.s/2)/P.s;d1v=d2v+P.s;
+    pd2+=(i?"L":"M")+sx(Kx).toFixed(1)+","+sy2(N(d2v)).toFixed(1);pd1+=(i?"L":"M")+sx(Kx).toFixed(1)+","+sy2(N(d1v)).toFixed(1);}
+  s2+='<path d="'+pd2+'" fill="none" stroke="var(--crimson)" stroke-width="2.2"/><path d="'+pd1+'" fill="none" stroke="var(--blue)" stroke-width="2.2"/>';
+  ticksFor(P.xmin,P.xmax,9).forEach(function(v){var xx=sx(v);s2+='<text x="'+xx+'" y="'+(H2-10)+'" text-anchor="middle" class="tk">'+v+'</text>';});
+  s2+='<circle cx="'+sx(P.med)+'" cy="'+sy2(0.5)+'" r="5" fill="var(--paper)" stroke="var(--crimson)" stroke-width="2"/><text x="'+(sx(P.med)-8)+'" y="'+(sy2(0.5)+20)+'" text-anchor="end" class="tb" fill="var(--crimson)">N(d&#8322;) = 50% at the median</text>';
+  s2+='<circle cx="'+sx(P.k50)+'" cy="'+sy2(0.5)+'" r="5" fill="var(--paper)" stroke="var(--blue)" stroke-width="2"/><text x="'+(sx(P.k50)+8)+'" y="'+(sy2(0.5)-9)+'" class="tb" fill="var(--blue)">delta = 50% at the 50 delta strike</text>';
+  var cd2=(Math.log(F/P.K)-P.s*P.s/2)/P.s,cd1=cd2+P.s;
+  s2+='<line x1="'+xk+'" y1="'+mt2+'" x2="'+xk+'" y2="'+sy2(0)+'" stroke="var(--ink)" stroke-width="1.6" stroke-dasharray="2 3"/>';
+  s2+='<circle cx="'+xk+'" cy="'+sy2(N(cd2))+'" r="4.5" fill="var(--crimson)"/><circle cx="'+xk+'" cy="'+sy2(N(cd1))+'" r="4.5" fill="var(--blue)"/>';
+  s2+='<text x="'+(ml+pw-4)+'" y="'+(mt2+12)+'" text-anchor="end" class="tb" fill="var(--blue)">delta = N(d&#8321;)</text><text x="'+(ml+pw-4)+'" y="'+(mt2+27)+'" text-anchor="end" class="tb" fill="var(--crimson)">chance of paying = N(d&#8322;)</text>';
+  $("svgB2").innerHTML=s2;
+
+  var x=Math.log(P.K/F)/P.s,call=Math.exp(-R*P.T)*(F*N(cd1)-P.K*N(cd2)),put=call-Math.exp(-R*P.T)*(F-P.K);
+  $("roB").innerHTML=
+    '<div>Moneyness x (std devs)<b>'+f1(x,2)+'</b></div>'+
+    '<div>d&#8322; = &minus;x &minus; s/2<b>'+f1(cd2,2)+'</b></div>'+
+    '<div class="hot">N(d&#8322;): chance of paying (above K)<b>'+f1(N(cd2)*100,1)+'%</b></div>'+
+    '<div>d&#8321; = &minus;x + s/2<b>'+f1(cd1,2)+'</b></div>'+
+    '<div class="hot">Call delta N(d&#8321;)<b>'+f1(N(cd1)*100,1)+'</b></div>'+
+    '<div>100 calls &asymp; shares<b>'+f1(N(cd1)*100,0)+'</b></div>'+
+    '<div>Call price<b>'+f1(call,2)+'</b></div>'+
+    '<div>Put price<b>'+f1(put,2)+'</b></div>';
+}
+
+/* ---- Widget C ---- */
+var spotTouched=false;
+function drawC(){
+  var W=680,H=284,ml=40,mr=14,mt=16,mb=48,pw=W-ml-mr,ph=H-mt-mb,a=50,b=150;
+  if(!spotTouched)$("S").value=P.S0;
+  var Sp=+$("S").value;$("v-S").textContent=Sp.toFixed(2);
+  var sx=function(x){return ml+(x-a)/(b-a)*pw;};
+  var NS=120,q,cv=[],ymax=0,x,val;
+  for(q=0;q<=NS;q++){x=a+(b-a)*q/NS;val=bsCall(x,P.K,P.sig,P.T).c;cv.push([x,val]);if(val>ymax)ymax=val;}
+  ymax=Math.max(ymax,Math.max(b-P.K,0))*1.06;ymax=Math.max(ymax,5);
+  var sy=function(y){return mt+ph*(1-y/ymax);};
+  var s='<defs><clipPath id="clipC"><rect x="'+ml+'" y="'+mt+'" width="'+pw+'" height="'+ph+'"/></clipPath></defs>';
+  ticksFor(0,ymax,6).forEach(function(v){s+='<line x1="'+ml+'" y1="'+sy(v)+'" x2="'+(ml+pw)+'" y2="'+sy(v)+'" class="grid"/><text x="'+(ml-5)+'" y="'+(sy(v)+4)+'" text-anchor="end" class="tk">'+v+'</text>';});
+  ticksFor(a,b,8).forEach(function(v){s+='<text x="'+sx(v)+'" y="'+(sy(0)+17)+'" text-anchor="middle" class="tk">'+v+'</text>';});
+  s+='<line x1="'+ml+'" y1="'+sy(0)+'" x2="'+(ml+pw)+'" y2="'+sy(0)+'" class="axl"/>';
+  /* hinge */
+  s+='<path d="M'+sx(a)+','+sy(0)+'L'+sx(Math.max(P.K,a))+','+sy(0)+'L'+sx(b)+','+sy(b-P.K)+'" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4" clip-path="url(#clipC)"/>';
+  var p="";cv.forEach(function(o,i){p+=(i?"L":"M")+sx(o[0]).toFixed(1)+","+sy(o[1]).toFixed(1);});
+  s+='<path d="'+p+'" fill="none" stroke="var(--ink)" stroke-width="2.6"/>';
+  /* tangent */
+  var r=bsCall(Sp,P.K,P.sig,P.T),dl=r.delta,y1=r.c+dl*(a-Sp),y2=r.c+dl*(b-Sp);
+  s+='<line x1="'+sx(a)+'" y1="'+sy(y1)+'" x2="'+sx(b)+'" y2="'+sy(y2)+'" stroke="var(--crimson)" stroke-width="2" clip-path="url(#clipC)"/>';
+  /* rise/run triangle: +10 in S */
+  var s2x=Sp+10;
+  if(s2x<=b){
+    s+='<path d="M'+sx(Sp)+','+sy(r.c)+'L'+sx(s2x)+','+sy(r.c)+'L'+sx(s2x)+','+sy(r.c+dl*10)+'" fill="none" stroke="var(--crimson)" stroke-width="1.4" stroke-dasharray="3 3"/>';
+    s+='<text x="'+(sx(s2x)+5)+'" y="'+((sy(r.c)+sy(r.c+dl*10))/2+4)+'" class="tb" fill="var(--crimson)">+'+f1(dl*10,2)+'</text>';
+    s+='<text x="'+((sx(Sp)+sx(s2x))/2)+'" y="'+(sy(r.c)+14)+'" text-anchor="middle" class="tb" fill="var(--crimson)">spot +10</text>';
+  }
+  s+='<circle cx="'+sx(Sp)+'" cy="'+sy(r.c)+'" r="5.5" fill="var(--crimson)"/>';
+  s+='<line x1="'+sx(P.K)+'" y1="'+sy(0)+'" x2="'+sx(P.K)+'" y2="'+(sy(0)-6)+'" stroke="var(--ink)" stroke-width="2"/><text x="'+sx(P.K)+'" y="'+(sy(0)+34)+'" text-anchor="middle" class="tb" fill="var(--ink)">K = '+f1(P.K)+'</text>';
+  s+='<text x="'+(ml+8)+'" y="'+(mt+12)+'" class="tk">call price against spot (strike, volatility and time from the sliders at the top)</text>';
+  $("svgC").innerHTML=s;
+  $("roC").innerHTML=
+    '<div>Spot<b>'+f1(Sp,2)+'</b></div>'+
+    '<div>Call price<b>'+f1(r.c,2)+'</b></div>'+
+    '<div class="hot">Slope = delta<b>'+f1(dl,3)+'</b></div>'+
+    '<div>Spot +1 &rarr; call &asymp;<b>+'+f1(dl,2)+'</b></div>';
+}
+
+/* ---- Ladder (D) + table ---- */
+function drawD(){
+  var W=680,H=210,ml=34,mr=34,pw=W-ml-mr,ay=104;
+  var xlo=-1.45*P.s,xhi=1.0*P.s;
+  var X=function(x){return ml+(x-xlo)/(xhi-xlo)*pw;};
+  var priceOfX=function(x){return F*Math.exp(x*P.s);};
+  var s='<line x1="'+ml+'" y1="'+ay+'" x2="'+(ml+pw)+'" y2="'+ay+'" stroke="var(--ink)" stroke-width="2"/>';
+  /* ruler in x with prices below */
+  var steps=[0.02,0.05,0.1,0.2,0.25,0.5,1],st=1,i;
+  for(i=0;i<steps.length;i++){if((xhi-xlo)/steps[i]<=9){st=steps[i];break;}}
+  for(var v=Math.ceil(xlo/st-1e-9)*st;v<=xhi+1e-9;v+=st){
+    var xx=X(v),vv=Math.round(v/st)*st;
+    s+='<line x1="'+xx+'" y1="'+ay+'" x2="'+xx+'" y2="'+(ay+8)+'" stroke="var(--ink)" stroke-width="1.4"/>';
+    s+='<text x="'+xx+'" y="'+(ay+22)+'" text-anchor="middle" class="tk">x = '+(vv>1e-9?"+":(vv<-1e-9?"\u2212":""))+Math.abs(vv).toFixed(st<0.1?2:(st<1?2:0))+'</text>';
+    s+='<text x="'+xx+'" y="'+(ay+35)+'" text-anchor="middle" class="tk">'+f1(priceOfX(vv),1)+'</text>';
+  }
+  s+='<text x="'+ml+'" y="'+(H-6)+'" class="tk">Ruler: moneyness x (standard deviations of log price from the forward), with the strike price underneath</text>';
+  var pts=[["median",P.med,"var(--crimson)",-0.5*P.s],["forward",F,"var(--ink)",0],["50 delta",P.k50,"var(--blue)",0.5*P.s]];
+  pts.forEach(function(o,i){
+    var xx=X(o[3]),rowy=(i%2===1)?ay-70:ay-40;
+    s+='<line x1="'+xx+'" y1="'+(rowy+4)+'" x2="'+xx+'" y2="'+ay+'" stroke="'+o[2]+'" stroke-width="1.3"/>';
+    s+='<circle cx="'+xx+'" cy="'+ay+'" r="5.5" fill="'+o[2]+'"/>';
+    var right=xx>W-120;
+    s+='<text x="'+(right?xx-5:xx+5)+'" y="'+(rowy+1)+'" text-anchor="'+(right?"end":"start")+'" class="tb" fill="'+o[2]+'">'+o[0]+' '+f1(o[1],2)+'</text>';
+  });
+  var by=ay-92;
+  function brace(x1,x2){return '<path d="M'+x1+','+(by+7)+'L'+x1+','+by+'L'+x2+','+by+'L'+x2+','+(by+7)+'" fill="none" stroke="var(--rule-strong)" stroke-width="1.2"/><text x="'+((x1+x2)/2)+'" y="'+(by-4)+'" text-anchor="middle" class="tk">\u03c3\u00b2T/2</text>';}
+  s+=brace(X(-0.5*P.s),X(0))+brace(X(0),X(0.5*P.s));
+  var xkv=Math.log(P.K/F)/P.s;
+  if(xkv>=xlo&&xkv<=xhi){var xk=X(xkv);
+    s+='<polygon points="'+(xk-6)+','+(ay+46)+' '+(xk+6)+','+(ay+46)+' '+xk+','+(ay+38)+'" fill="var(--ink)"/><text x="'+xk+'" y="'+(ay+60)+'" text-anchor="middle" class="tb" fill="var(--ink)">your K = '+f1(P.K,1)+'</text>';}
+  $("svgD").innerHTML=s;
+  /* table */
+  var rows=[["80",80],["90",90],["100 (forward)",100],["110",110],["120",120]];
+  var extra=[["median",P.med],["50 delta strike",P.k50]];
+  var h='<tr><th>Strike <span class="m">K</span></th><th class="n">Moneyness <span class="m">x</span></th><th class="n"><span class="m">d<sub>1</sub></span></th><th class="n">Call delta</th><th class="n"><span class="m">N(d<sub>2</sub>)</span>: chance of paying (above K)</th></tr>';
+  var all=[["80",80,0],["90",90,0],["median "+f1(P.med,1),P.med,1],["forward 100",100,1],["50 delta "+f1(P.k50,1),P.k50,1],["110",110,0],["120",120,0]];
+  all.sort(function(a,b){return a[1]-b[1];});
+  all.forEach(function(o){
+    var K=o[1],x=Math.log(K/F)/P.s,d1=-x+P.s/2,d2=-x-P.s/2;
+    h+='<tr class="'+(o[2]?"hl":"")+'"><td>'+o[0]+'</td><td class="n">'+(x>=0?"+":"\u2212")+Math.abs(x).toFixed(2)+'</td><td class="n">'+f1(d1,2)+'</td><td class="n">'+(N(d1)*100).toFixed(1)+'</td><td class="n">'+(N(d2)*100).toFixed(1)+'%</td></tr>';
+  });
+  $("tblD").innerHTML=h;
+}
+
+function update(){readState();drawA();drawB();drawC();drawD();}
+["sig","T","K","n","S"].forEach(function(id){$(id).addEventListener("input",function(){if(id==="S")spotTouched=true;update();});});
+document.querySelectorAll("[data-p]").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    readState();
+    var v=btn.getAttribute("data-p")==="med"?P.med:(btn.getAttribute("data-p")==="fwd"?F:P.k50);
+    $("K").value=v;update();
+  });
+});
+update();
+})();
+</script></body></html>
